@@ -5,7 +5,7 @@ Course Distributed Systems, Second lab work, autumn 2021
 
 *Technology*: WebServices (SOAP)
 
-### How generate code for clients
+### How to generate code for clients
 ```
 wsimport http://localhost:8888/AutoTestingSystem?wsdl -keep -d "<path_to_repository>\auto_testing_system\client\src\main\java\."
 ```
