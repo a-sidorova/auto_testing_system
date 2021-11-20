@@ -9,12 +9,11 @@ import java.util.Random;
 @WebService(endpointInterface = "service.AutoTestingSystem")
 public class AutoTestingSystemImpl implements AutoTestingSystem {
     public ArrayList<Test> tests = new ArrayList<Test>();
-    public ArrayList<Question> questions = new ArrayList<Question>();
-    private Random rand = new Random(666);
+    private Random rand = new Random(23);
 
     @Override
     public int createTest(String name) {
-        Test test = new Test(name, rand.nextInt(100000) + 1);
+        Test test = new Test(name, rand.nextInt(1000) + 1);
         System.out.println(tests.size());
         tests.add(test);
         return test.ID;
@@ -25,7 +24,6 @@ public class AutoTestingSystemImpl implements AutoTestingSystem {
         for (Test test : tests) {
             if (test.ID == testID) {
                 Question q = new Question(text, rand.nextInt(100000) + 1);
-                questions.add(q);
                 test.addQuestion(q);
                 return  q.ID;
             }
@@ -33,25 +31,36 @@ public class AutoTestingSystemImpl implements AutoTestingSystem {
         return -1;
     }
 
-    // Добавить для вопроса варианты ответа (принимает идентификатор вопроса и массив записей, описывающих ответы на него.
     @Override
-    public void addResponceOptions(int questionID, ArrayList<Option> options) {
-        System.out.println("SIZE");
-        System.out.println(options.size());
-        for (Question q : questions) {
-            if (q.ID == questionID) {
-                q.addOptions(options);
+    public void addResponceOptions(int testID, int questionID, ArrayList<Option> options) {
+        System.out.println("[ INFO ] Option count: " + options.size());
+
+        for (Test test : tests) {
+            if (test.ID == testID) {
+                for (Question q : test.questions) {
+                    if (q.ID == questionID) {
+                        q.addOptions(options);
+                    }
+                }
+
+                break;
             }
         }
     }
 
     @Override
-    public void addResponseOption(int questionID, String text, boolean isCorrect, int trueTarget,
-                                  int falseNotTarget, int falseTarget, int trueNotTarget) {
-        for (Question q : questions) {
-            if (q.ID == questionID) {
-                Option option = new Option(text, isCorrect, trueTarget, falseNotTarget, falseTarget, trueNotTarget);
-                q.addOption(option);
+    public void addResponseOption(int testID, int questionID, String text, boolean isCorrect, int trueSelected,
+                                  int falseNotSelected, int falseSelected, int trueNotSelected) {
+        for (Test test : tests) {
+            if (test.ID == testID) {
+                for (Question q : test.questions) {
+                    if (q.ID == questionID) {
+                        Option option = new Option(rand.nextInt(100) + 1, text, isCorrect, trueSelected, falseNotSelected, falseSelected, trueNotSelected);
+                        q.addOption(option);
+                    }
+                }
+
+                break;
             }
         }
     }
@@ -65,7 +74,6 @@ public class AutoTestingSystemImpl implements AutoTestingSystem {
         return res;
     }
 
-    // Начать тест (принимает идентификатор теста)
     @Override
     public boolean runTest(int id) {
         for (Test test : tests) {
@@ -77,61 +85,68 @@ public class AutoTestingSystemImpl implements AutoTestingSystem {
         return false;
     }
 
-    // Получить следующий вопрос теста
-    // (принимает идентификатор теста, возвращает текст вопроса,идентификатор вопроса и массив записей, содержащих текст варианта ответа и идентификатор варианта ответа)
     @Override
     public String getNextQuestion(int testID) {
-        String res = new String();
         for (Test test : tests) {
             if (test.ID == testID) {
-                res = test.getNextQuestion();
+                return test.getNextQuestion();
             }
         }
-        return res;
+        return new String("[ ERROR ] Test wasn't found!");
     }
 
-    // Ответить на вопрос (принимает идентификатор вопроса и массив идентификаторов ответа на него)
     @Override
-    public void setAnswer(int testID, int questionID, Boolean[] answers) {
-        Test test = new Test();
+    public void setAnswer(int testID, int questionID, ArrayList<Integer> answersID) {
         for (Test t : tests) {
             if (t.ID == testID) {
-                test = t;
-            }
-        }
+                for (Question q : t.questions) {
+                    if (q.ID == questionID) {
+                        for (Option answer : q.options) {
+                            boolean expected = answer.isCorrect;
 
-        for (Question q : questions) {
-            if (q.ID == questionID) {
-                for (int i = 0; i < answers.length; ++i) {
-                    boolean cur = answers[i];
-                    boolean expected = q.options.get(i).isCorrect;
+                            int idx;
+                            for (idx = 0; idx < answersID.size(); idx++) {
+                                if (answer.ID == answersID.get(idx).intValue()) {
 
-                    if (cur == true && expected == true) {
-                        test.points += q.options.get(i).trueTarget;
-                    } else if (cur == true && expected == false) {
-                        test.points -= q.options.get(i).falseNotTarget;
-                    } else if (cur == false && expected == false) {
-                        test.points += q.options.get(i).trueNotTarget;
-                    } else {
-                        test.points -= q.options.get(i).falseTarget;
+                                    if (expected) {
+                                        t.points += answer.trueSelected;
+                                    } else {
+                                        t.points -= answer.falseSelected;
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            if (idx == answersID.size()) {
+                                if (expected) {
+                                    t.points += answer.trueNotSelected;
+                                } else {
+                                    t.points -= answer.falseNotSelected;
+                                }
+                            }
+                        }
+
+                        t.curQuestion++;
+                        return;
                     }
                 }
-                test.curQuestion++;
+
+                return;
             }
         }
     }
 
-    // Закончить тест (принимает идентификатор теста)
     @Override
     public void completeTest(int testID) {
         for (Test test : tests) {
             if (test.ID == testID) {
                 test.isEnd = true;
+                break;
             }
         }
     }
 
-    // Получить количество полученных баллов (принимает идентификатор теста, возвращает количество полученных баллов)
     @Override
     public int getPoints(int testID) {
         for (Test test : tests) {

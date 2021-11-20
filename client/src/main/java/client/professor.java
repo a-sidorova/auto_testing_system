@@ -2,23 +2,17 @@ package client;
 
 import service.AutoTestingSystem;
 import service.AutoTestingSystemImplService;
-import service.Option;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
+/* Class of professor */
 public class professor {
     public static AutoTestingSystem system;
     public static void main(String[] args) throws Exception{
         try {
-            AutoTestingSystemImplService tsis = new AutoTestingSystemImplService(new URL("http://localhost:8888/TaskService?wsdl"));
+            AutoTestingSystemImplService tsis = new AutoTestingSystemImplService(new URL("http://localhost:8888/AutoTestingSystem?wsdl"));
             system = tsis.getAutoTestingSystemImplPort();
 
             InputStream inputStream = System.in;
@@ -27,83 +21,83 @@ public class professor {
             while (true) {
                 int code = menu(scanner);
                 if (code == 0) {
-                    System.out.println("Exit...");
+                    System.out.println("[ INFO ] Exit...");
                     break;
                 }
                 switch (code) {
                     case 1: {
-                        System.out.println("Enter test name:");
+                        System.out.print("[ INFO ] Enter test name: ");
                         String name = scanner.nextLine();
                         int id = system.createTest(name);
-                        System.out.println("Test was successfully created. ID: " + id);
+                        System.out.println("[ INFO ] Test was successfully created. ID: " + id);
                         break;
                     }
                     case 2: {
-                        System.out.println("Enter test ID:");
+                        System.out.print("[ INFO ] Enter test ID: ");
                         int testID = Integer.parseInt(scanner.nextLine());
-                        System.out.println("Enter question text:");
+                        System.out.print("[ INFO ] Enter question text: ");
                         String text = scanner.nextLine();
 
                         int questionID = system.addQuestion(text, testID);
-                        System.out.println("Question was successfully created. ID: " + questionID);
+                        System.out.println("[ INFO ] Question was successfully created. ID: " + questionID);
                         break;
                     }
                     case 3: {
-                        System.out.println("Enter question ID:");
+                        System.out.print("[ INFO ] Enter test ID: ");
+                        int testID = Integer.parseInt(scanner.nextLine());
+
+                        System.out.print("[ INFO ] Enter question ID: ");
                         int questionID = Integer.parseInt(scanner.nextLine());
 
-                        System.out.println("Enter count of answers:");
+                        System.out.print("[ INFO ] Enter count of answers: ");
                         int size = Integer.parseInt(scanner.nextLine());
 
-                        ArrayList<Option> options = new ArrayList<Option>();
                         for (int i = 0; i < size; ++i) {
-                            System.out.println("Enter answer text:");
+                            System.out.print("[ INFO ] Enter answer text: ");
                             String text = scanner.nextLine();
 
-                            System.out.println("Is it right?");
+                            System.out.print("[ INFO ] Is it right? ");
                             boolean isCorrect = Boolean.parseBoolean(scanner.nextLine());
                             int count1, count2, count3, count4;
 
                             if (isCorrect) {
-                                System.out.println("Add count of points if answer is right and student chose it:");
+                                System.out.print("[ INFO ] Add count of points if answer is right and student chose it: ");
                                 count1 = Integer.parseInt(scanner.nextLine());
-                                System.out.println("Remove count of points if answer is right and student didn't choose it:");
+                                System.out.print("[ INFO ] Remove count of points if answer is right and student didn't choose it: ");
                                 count2 = Integer.parseInt(scanner.nextLine());
                                 count3 = count4 = 0;
                             } else {
-                                System.out.println("Remove count of points if answer isn't right but student chose it:");
+                                System.out.print("[ INFO ] Remove count of points if answer isn't right but student chose it: ");
                                 count3 = Integer.parseInt(scanner.nextLine());
-                                System.out.println("Add count of points if answer isn't right and student didn't choose it:");
+                                System.out.print("[ INFO ] Add count of points if answer isn't right and student didn't choose it: ");
                                 count4 = Integer.parseInt(scanner.nextLine());
                                 count1 = count2 = 0;
                             }
-                            system.addResponseOption(questionID, text, isCorrect, count1, count2, count3, count4);
-                            options.add(new Option(text, isCorrect, count1, count2, count3, count4));
-                            System.out.println("Answer was successfully added");
+                            system.addResponseOption(testID, questionID, text, isCorrect, count1, count2, count3, count4);
+                            System.out.println("[ INFO ] Answer was successfully added");
                         }
-                        System.out.println("Options were successfully added");
+                        System.out.println("[ INFO ] Options were successfully added");
+                        break;
                     }
                     case -13211: {
-                        System.out.println("Input is not valid. Try again.");
+                        System.out.println("[ ERROR ] Input is not valid. Try again.");
                         break;
                     }
                     default:
                     {
-                        System.out.println("Unknown menu item. Try again.");
+                        System.out.println("[ ERROR ] Unknown menu item. Try again.");
                         break;
                     }
-                } // end Switch
-            } // end While (true)
+                }
+            }
         } catch (javax.xml.ws.WebServiceException ex) {
-            System.out.println("WebServiceException!");
+            System.out.println("[ ERROR ] WebServiceException: " + ex.getMessage());
         } catch (Exception ex) {
-            System.out.println("Unhandled exception!");
+            System.out.println("[ ERROR ] Unhandled exception: " + ex.getMessage());
             ex.getMessage();
         }
     }
 
-    //-------------------------------------------------------------------------------------------------------
-    // Меню пользователя
     public static int menu(Scanner scanner) {
         System.out.println("\n------ Menu ------");
         System.out.println("-- '1' - Create test.");
@@ -113,7 +107,7 @@ public class professor {
         int code = -1;
 
         try {
-            System.out.print("Enter number: ");
+            System.out.print("[ INFO ] Enter number: ");
             code = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException ex) {
             code = -13211;
